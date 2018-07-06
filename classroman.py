@@ -156,7 +156,7 @@ class NegativeError(ValueError):
 
 
 class FractionError(ValueError):
-        pass
+    pass
 
 
 class Convert:
@@ -202,3 +202,6 @@ class Convert:
 
             elif not integer:
                 return Numeral("".join(list_i))
+=======
+    pass
+>>>>>>> 4b89f7592e3364da3049a51cae6c5e3246a106d5
