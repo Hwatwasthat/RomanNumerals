@@ -25,7 +25,18 @@ class Numeral:
         return Numeral(self.subtract(self.value, other.value))
 
     def __mul__(self, other):
-        return Numeral(self.multiply(self.value, other.value))
+        if type(other) == str and all(x in self.NUMERALS for x in other):
+            return Numeral(self.multiply(self.value, (Numeral(other)).value))
+        elif type(other) == Numeral:
+            return Numeral(self.multiply(self.value, other.value))
+        else:
+            raise ValueError("Roman Numerals can only interact with Roman Numerals")
+
+    def __rmul__(self, other):
+        if type(other) == str and all(x in self.NUMERALS for x in other):
+            return Numeral(self.multiply(self.value, (Numeral(other)).value))
+        else:
+            raise ValueError("Roman Numerals can only interact with Roman Numerals")
 
     def __truediv__(self, other):
         return self.divide(self.value, other.value)
@@ -70,7 +81,7 @@ class Numeral:
                 count = self.add(count, "I")
 
             except NegativeError:
-                if count == "":
+                if not count:
                     raise FractionError("Can't have fractions in Roman Numerals")
                 return Numeral(count), Numeral(arg1)
             except ZeroError:
@@ -146,3 +157,48 @@ class NegativeError(ValueError):
 
 class FractionError(ValueError):
         pass
+
+
+class Convert:
+
+    @staticmethod
+    def roman_to_int(roman):
+        rome_dict = {
+            "M": 1000,
+            "D": 500,
+            "C": 100,
+            "L": 50,
+            "X": 10,
+            "V": 5,
+            "I": 1
+        }
+        result = []
+        for letter in roman.value:
+            result.append(rome_dict.get(letter, 0))
+
+        return sum(result)
+
+    @staticmethod
+    def int_to_roman(integer):
+        list_i = []
+
+        while True:
+
+            if integer > 1000:
+                list_i.append("M")
+                integer -= 1000
+
+            elif integer > 100:
+                list_i.append("C")
+                integer -= 100
+
+            elif integer > 10:
+                list_i.append("X")
+                integer -= 10
+
+            elif integer >= 1:
+                list_i.append("I")
+                integer -= 1
+
+            elif not integer:
+                return Numeral("".join(list_i))
