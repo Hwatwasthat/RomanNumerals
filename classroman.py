@@ -145,4 +145,4 @@ class NegativeError(ValueError):
 
 
 class FractionError(ValueError):
-        pass
+    pass
