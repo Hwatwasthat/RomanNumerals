@@ -3,59 +3,115 @@ class Numeral:
     REPLACEMENTS = (
         ("IV", "IIII"),
         ("IX", "VIIII"),
-        ("IL", "XXXXVIIII"),
         ("XL", "XXXX"),
-        ("IC", "LXXXXVIIII"),
         ("XC", "LXXXX"),
-        ("XD", "CCCCLXXXX"),
-        ("ID", "CCCCLXXXXVIIII"),
         ("CD", "CCCC"),
-        ("XM", "DCCCCLXXXX"),
         ("CM", "DCCCC"),
-        ("IM", "DCCCCLXXXXVIIII"),
     )
 
     def __init__(self, value):
-        self.value = self.canonicalise(value)
+        self.value = self._canonicalise(value)
 
     def __add__(self, other):
-        return Numeral(self.add(self.value, other.value))
+        if type(other) == str and all(x in self.NUMERALS for x in other):
+            return Numeral(self._add(self.value, (Numeral(other)).value))
+
+        elif type(other) == int:
+            return Numeral(self._add(self.value, (Convert.int_to_roman(other)).value))
+
+        elif type(other) == Numeral:
+            return Numeral(self._add(self.value, other.value))
+
+        else:
+            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
 
     def __sub__(self, other):
-        return Numeral(self.subtract(self.value, other.value))
+        if type(other) == str and all(x in self.NUMERALS for x in other):
+            return Numeral(self._subtract(self.value, (Numeral(other)).value))
+
+        elif type(other) == int:
+            return Numeral(self._subtract(self.value, (Convert.int_to_roman(other)).value))
+
+        elif type(other) == Numeral:
+            return Numeral(self._subtract(self.value, other.value))
+
+        else:
+            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
 
     def __mul__(self, other):
         if type(other) == str and all(x in self.NUMERALS for x in other):
-            return Numeral(self.multiply(self.value, (Numeral(other)).value))
+            return Numeral(self._multiply(self.value, (Numeral(other)).value))
+
+        elif type(other) == int:
+            return Numeral(self._multiply(self.value, (Convert.int_to_roman(other)).value))
+
         elif type(other) == Numeral:
-            return Numeral(self.multiply(self.value, other.value))
+            return Numeral(self._multiply(self.value, other.value))
+
         else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals")
+            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
 
     def __rmul__(self, other):
-        if type(other) == str and all(x in self.NUMERALS for x in other):
-            return Numeral(self.multiply(self.value, (Numeral(other)).value))
-        else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals")
+        return self.__mul__(other)
 
     def __truediv__(self, other):
-        return self.divide(self.value, other.value)
+        """
+        Divides by a Roman Numeral, string with Roman Numeral characters or an integer.
+        Only returns whole numbers, as Roman fractions only exist in /12 format.
+        If partial division is necessary, returns a remainder value.
+        :param other: Object to divide by. May be a Roman Numeral object, string or integer.
+        :return: Returns a Roman Numeral object, or two if their is a remainder.
+        """
+        if type(other) == str and all(x in self.NUMERALS for x in other):
+            return self._divide(self.value, (Numeral(other)).value)
+
+        elif type(other) == int:
+            return self._divide(self.value, (Convert.int_to_roman(other)).value)
+
+        elif type(other) == Numeral:
+            return self._divide(self.value, other.value)
+
+        else:
+            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
 
     def __pow__(self, other, modulo=None):
-        return Numeral(self.power(self.value, other.value))
+        if type(other) == str and all(x in self.NUMERALS for x in other):
+            return Numeral(self._power(self.value, (Numeral(other)).value))
+
+        elif type(other) == int:
+            return Numeral(self._power(self.value, (Convert.int_to_roman(other)).value))
+
+        elif type(other) == Numeral:
+            return Numeral(self._power(self.value, other.value))
+
+        else:
+            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
+
+    def __mod__(self, other):
+        if type(other) == str and all(x in self.NUMERALS for x in other):
+            return Numeral(self.modulo(self.value, (Numeral(other)).value))
+
+        elif type(other) == int:
+            return Numeral(self.modulo(self.value, (Convert.int_to_roman(other)).value))
+
+        elif type(other) == Numeral:
+            return Numeral(self.modulo(self.value, other.value))
+
+        else:
+            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
 
     def __repr__(self):
         return self.value
 
-    def add(self, arg1, arg2):
-        return self.canonicalise(self.sort_descending(self.decanonicalise(arg1)
-                                                      + self.decanonicalise(arg2)))
+    def _add(self, arg1, arg2):
+        return self._canonicalise(self._sort_descending(self._decanonicalise(arg1)
+                                                        + self._decanonicalise(arg2)))
 
-    def subtract(self, arg1, arg2):
+    def _subtract(self, arg1, arg2):
 
         while arg1 and arg2:
-            arg1 = self.decrement(arg1)
-            arg2 = self.decrement(arg2)
+            arg1 = self._decrement(arg1)
+            arg2 = self._decrement(arg2)
 
         if arg2:
             raise NegativeError("Numbers cannot be below zero")
@@ -65,40 +121,52 @@ class Numeral:
 
         return arg1
 
-    def multiply(self, arg1, arg2):
+    def _multiply(self, arg1, arg2):
         total = ""
         while arg2:
-            total = self.add(total, arg1)
-            arg2 = self.decrement(arg2)
+            total = self._add(total, arg1)
+            arg2 = self._decrement(arg2)
 
         return total
 
-    def divide(self, arg1, arg2):
+    def _divide(self, arg1, arg2):
         count = ""
         while True:
             try:
-                arg1 = self.subtract(arg1, arg2)
-                count = self.add(count, "I")
+                arg1 = self._subtract(arg1, arg2)
+                count = self._add(count, "I")
 
             except NegativeError:
                 if not count:
                     raise FractionError("Can't have fractions in Roman Numerals")
                 return Numeral(count), Numeral(arg1)
             except ZeroError:
-                return Numeral(self.add(count, "I"))
+                return Numeral(self._add(count, "I"))
 
-    def power(self, arg1, arg2):
+    def _power(self, arg1, arg2):
         total = "I"
         while arg2:
-            total = self.multiply(total, arg1)
-            arg2 = self.decrement(arg2)
+            total = self._multiply(total, arg1)
+            arg2 = self._decrement(arg2)
 
         return total
 
-    def sort_descending(self, unsorted):
+    def modulo(self, arg1, arg2):
+        while True:
+            res = arg1
+            try:
+                arg1 = self._subtract(arg1, arg2)
+            except ZeroError:
+                res = ""
+                break
+            except NegativeError:
+                break
+        return res
+
+    def _sort_descending(self, unsorted):
         return "".join(sorted(unsorted, key=self.NUMERALS.index))
 
-    def decanonicalise(self, num):
+    def _decanonicalise(self, num):
 
         while True:
             old = num
@@ -108,8 +176,7 @@ class Numeral:
                 break
         return num
 
-    def canonicalise(self, num):
-
+    def _canonicalise(self, num):
         num = num.replace("IIIII", "V")
         num = num.replace("VV", "X")
         num = num.replace("XXXXX", "L")
@@ -125,8 +192,8 @@ class Numeral:
                 break
         return num
 
-    def decrement(self, arg):
-        num = self.decanonicalise(arg)
+    def _decrement(self, arg):
+        num = self._decanonicalise(arg)
         last = num[-1]
         rest = num[:-1]
         if last == "I":
@@ -187,18 +254,14 @@ class Convert:
             if integer > 1000:
                 list_i.append("M")
                 integer -= 1000
-
             elif integer > 100:
                 list_i.append("C")
                 integer -= 100
-
             elif integer > 10:
                 list_i.append("X")
                 integer -= 10
-
             elif integer >= 1:
                 list_i.append("I")
                 integer -= 1
-
             elif not integer:
                 return Numeral("".join(list_i))
