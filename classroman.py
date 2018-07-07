@@ -1,6 +1,11 @@
 class Numeral:
-    NUMERALS = "MDCLXVI"
-    REPLACEMENTS = (
+    """
+    Class for Roman Numerals. Can add, multiply, flat divide, modulo and raise
+    to powers. Has capability to change from integers and back again, and accepts
+    strings and integers as arguments.
+    """
+    _NUMERALS = "MDCLXVI"
+    _REPLACEMENTS = (
         ("IV", "IIII"),
         ("IX", "VIIII"),
         ("XL", "XXXX"),
@@ -10,105 +15,125 @@ class Numeral:
     )
 
     def __init__(self, value):
-        self.value = self._canonicalise(value)
+        """
+        Only accepts strings and integers, returns a Numeral object.
+        :param value: str or int.
+        """
+        if type(value) == str:
+            self.value = self._canonicalise(self._sort_descending(value.upper()))
+        elif type(value) == int:
+            self.value = self.from_int(value).value
+        else:
+            raise TypeError("Expected str or int")
 
     def __add__(self, other):
-        if type(other) == str and all(x in self.NUMERALS for x in other):
-            return Numeral(self._add(self.value, (Numeral(other)).value))
+        """
+        Add values. Accepts str, int or Numeral object.
+        :param other: value to add.
+        :return: Numeral object with added value.
+        """
+        return Numeral(self._add(*self._checker(other)))
 
-        elif type(other) == int:
-            return Numeral(self._add(self.value, (Convert.int_to_roman(other)).value))
-
-        elif type(other) == Numeral:
-            return Numeral(self._add(self.value, other.value))
-
-        else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
+    def __radd__(self, other):
+        """
+        Add Numeral to integer.
+        :param other: value to add to.
+        :return: integer.
+        """
+        return other + self.to_int()
 
     def __sub__(self, other):
-        if type(other) == str and all(x in self.NUMERALS for x in other):
-            return Numeral(self._subtract(self.value, (Numeral(other)).value))
+        """
+        subtract a value. Accepts str, int or Numeral object.
+        :param other: value to subtract.
+        :return: Numeral object.
+        """
+        return Numeral(self._subtract(*self._checker(other)))
 
-        elif type(other) == int:
-            return Numeral(self._subtract(self.value, (Convert.int_to_roman(other)).value))
-
-        elif type(other) == Numeral:
-            return Numeral(self._subtract(self.value, other.value))
-
-        else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
+    def __rsub__(self, other):
+        """
+        Subtract Numeral from an integer.
+        :param other: int to subtract.
+        :return: integer.
+        """
+        return other - self.to_int()
 
     def __mul__(self, other):
-        if type(other) == str and all(x in self.NUMERALS for x in other):
-            return Numeral(self._multiply(self.value, (Numeral(other)).value))
-
-        elif type(other) == int:
-            return Numeral(self._multiply(self.value, (Convert.int_to_roman(other)).value))
-
-        elif type(other) == Numeral:
-            return Numeral(self._multiply(self.value, other.value))
-
-        else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
+        return Numeral(self._multiply(*self._checker(other)))
 
     def __rmul__(self, other):
-        return self.__mul__(other)
+        return other * self.to_int()
 
     def __truediv__(self, other):
+        return self._divide(*self._checker(other))
+
+    def __rtruediv__(self, other: int):
         """
-        Divides by a Roman Numeral, string with Roman Numeral characters or an integer.
-        Only returns whole numbers, as Roman fractions only exist in /12 format.
-        If partial division is necessary, returns a remainder value.
-        :param other: Object to divide by. May be a Roman Numeral object, string or integer.
-        :return: Returns a Roman Numeral object, or two if their is a remainder.
+        Divide integer by Numeral value.
+        :param other: integer.
+        :return: integer.
         """
-        if type(other) == str and all(x in self.NUMERALS for x in other):
-            return self._divide(self.value, (Numeral(other)).value)
+        return other / self.to_int()
 
-        elif type(other) == int:
-            return self._divide(self.value, (Convert.int_to_roman(other)).value)
-
-        elif type(other) == Numeral:
-            return self._divide(self.value, other.value)
-
-        else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
+    def __rfloordiv__(self, other: int):
+        """
+        Floor divide integer by Numeral value.
+        :param other: integer.
+        :return: integer.
+        """
+        return other // self.to_int()
 
     def __pow__(self, other, modulo=None):
-        if type(other) == str and all(x in self.NUMERALS for x in other):
-            return Numeral(self._power(self.value, (Numeral(other)).value))
+        return Numeral(self._power(*self._checker(other)))
 
-        elif type(other) == int:
-            return Numeral(self._power(self.value, (Convert.int_to_roman(other)).value))
-
-        elif type(other) == Numeral:
-            return Numeral(self._power(self.value, other.value))
-
-        else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
+    def __rpow__(self, other):
+        return other ** self.to_int()
 
     def __mod__(self, other):
-        if type(other) == str and all(x in self.NUMERALS for x in other):
-            return Numeral(self.modulo(self.value, (Numeral(other)).value))
+        return Numeral(self._modulo(*self._checker(other)))
 
-        elif type(other) == int:
-            return Numeral(self.modulo(self.value, (Convert.int_to_roman(other)).value))
-
-        elif type(other) == Numeral:
-            return Numeral(self.modulo(self.value, other.value))
-
-        else:
-            raise ValueError("Roman Numerals can only interact with Roman Numerals and integers")
+    def __rmod__(self, other):
+        return other % self.to_int()
 
     def __repr__(self):
         return self.value
 
+    def _checker(self, other):
+        """
+        checks type of value to be used as other side of argument. returns
+        a Numeral objects value for computation against.
+        :param other: str, int or Numeral object for calculation against.
+        :return: Numeral objects value.
+        """
+        if type(other) == str and all(x in self._NUMERALS for x in other):
+            return self.value, Numeral(other).value
+
+        elif type(other) == int:
+            return self.value, self.from_int(other).value
+
+        elif type(other) == Numeral:
+            return self.value, other.value
+
+        else:
+            raise ValueError("Expected Numeral, str or int")
+
     def _add(self, arg1, arg2):
+        """
+        Internal method for addition.
+        :param arg1: Numeral object value.
+        :param arg2: Numeral object value.
+        :return: Ordered str for placement in new Numeral object.
+        """
         return self._canonicalise(self._sort_descending(self._decanonicalise(arg1)
                                                         + self._decanonicalise(arg2)))
 
     def _subtract(self, arg1, arg2):
-
+        """
+        Internal method for subtraction.
+        :param arg1: Numeral object value.
+        :param arg2: Numeral object value.
+        :return: Ordered str for placement in new Numeral object.
+        """
         while arg1 and arg2:
             arg1 = self._decrement(arg1)
             arg2 = self._decrement(arg2)
@@ -151,7 +176,7 @@ class Numeral:
 
         return total
 
-    def modulo(self, arg1, arg2):
+    def _modulo(self, arg1, arg2):
         while True:
             res = arg1
             try:
@@ -164,19 +189,35 @@ class Numeral:
         return res
 
     def _sort_descending(self, unsorted):
-        return "".join(sorted(unsorted, key=self.NUMERALS.index))
+        """
+        Internal method to sort string into order from greatest to least.
+        :param unsorted: str to be sorted.
+        :return: a str sorted by the NUMERAL str order.
+        """
+        return "".join(sorted(unsorted, key=self._NUMERALS.index))
 
     def _decanonicalise(self, num):
-
+        """
+        Internal method, breaks down compacted values to longer strings
+        for computation (eg. VIIII from IX).
+        :param num: str to be decomposed.
+        :return: decomposed string.
+        """
         while True:
             old = num
-            for needle, replacement in self.REPLACEMENTS:
+            for needle, replacement in self._REPLACEMENTS:
                 num = num.replace(needle, replacement)
             if old == num:
                 break
         return num
 
     def _canonicalise(self, num):
+        """
+        Internal method to replace values with their next greater, or appropriate
+        shortening (e.g. IX instead of VIIII).
+        :param num: decomposed str.
+        :return:
+        """
         num = num.replace("IIIII", "V")
         num = num.replace("VV", "X")
         num = num.replace("XXXXX", "L")
@@ -186,7 +227,7 @@ class Numeral:
 
         while True:
             old = num
-            for replacement, needle in reversed(self.REPLACEMENTS):
+            for replacement, needle in reversed(self._REPLACEMENTS):
                 num = num.replace(needle, replacement)
             if old == num:
                 break
@@ -213,23 +254,11 @@ class Numeral:
 
         return num
 
-
-class ZeroError(ValueError):
-    pass
-
-
-class NegativeError(ValueError):
-    pass
-
-
-class FractionError(ValueError):
-    pass
-
-
-class Convert:
-
-    @staticmethod
-    def roman_to_int(roman):
+    def to_int(self):
+        """
+        Returns the current Numeral objects integer value.
+        :return: int.
+        """
         rome_dict = {
             "M": 1000,
             "D": 500,
@@ -240,17 +269,22 @@ class Convert:
             "I": 1
         }
         result = []
-        for letter in roman.value:
+        decanon = self._decanonicalise(self.value)
+        for letter in decanon:
             result.append(rome_dict.get(letter, 0))
 
         return sum(result)
 
     @staticmethod
-    def int_to_roman(integer):
+    def from_int(integer: int):
+        """
+        Turns any integer value into a Numeral object.
+        :param integer: int to be changed.
+        :return:
+        """
         list_i = []
 
         while True:
-
             if integer > 1000:
                 list_i.append("M")
                 integer -= 1000
@@ -265,3 +299,15 @@ class Convert:
                 integer -= 1
             elif not integer:
                 return Numeral("".join(list_i))
+
+
+class ZeroError(ValueError):
+    pass
+
+
+class NegativeError(ValueError):
+    pass
+
+
+class FractionError(ValueError):
+    pass

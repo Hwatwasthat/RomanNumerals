@@ -1,6 +1,6 @@
 NUMERALS = "MDCLXVI"
 
-replacements = (
+REPLACEMENTS = (
     ("IV", "IIII"),
     ("IX", "VIIII"),
     ("IL", "XXXXVIIII"),
@@ -28,7 +28,7 @@ def decanonicalise(num):
 
     while True:
         old = num
-        for needle, replacement in replacements:
+        for needle, replacement in REPLACEMENTS:
             num = num.replace(needle, replacement)
         if old == num:
             break
@@ -46,7 +46,7 @@ def canonicalise(num):
 
     while True:
         old = num
-        for replacement, needle in reversed(replacements):
+        for replacement, needle in reversed(REPLACEMENTS):
             num = num.replace(needle, replacement)
         if old == num:
             break
