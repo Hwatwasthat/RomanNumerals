@@ -237,20 +237,14 @@ class Numeral:
         num = self._decanonicalise(arg)
         last = num[-1]
         rest = num[:-1]
-        if last == "I":
-            num = rest
-        elif last == "V":
-            num = rest + "IIII"
-        elif last == "X":
-            num = rest + "VIIII"
-        elif last == "L":
-            num = rest + "XXXXVIIII"
-        elif last == "C":
-            num = rest + "LXXXXVIIII"
-        elif last == "D":
-            num = rest + "CCCCLXXXXVIIII"
-        elif last == "M":
-            num = rest + "DCCCCLXXXXVIIII"
+        replace_dict = {"I":rest,
+                        "V":rest + "IIII",
+                        "X":rest + "VIIII",
+                        "L":rest + "XXXXVIIII",
+                        "C":rest + "LXXXXVIIII",
+                        "D":rest + "CCCCLXXXXVIIII",
+                        "M":rest + "DCCCCLXXXXVIIII"}
+        num = replace_dict[last]
 
         return num
 
